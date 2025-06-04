@@ -52,10 +52,9 @@ Universal File Drop 是一个全栈 Web 应用程序，提供简单的文件上�
 
 1.  **克隆仓库:**
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/fandong1993/filedrop
     cd universal-file-drop
     ```
-    请将 `<your-repository-url>` 替换为您的实际仓库 URL。
 
 2.  **安装根目录依赖:**
     (这些主要用于 `esbuild` 和 `concurrently`)
