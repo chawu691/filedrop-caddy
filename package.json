@@ -1,0 +1,18 @@
+
+{
+  "name": "universal-file-drop-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm:build:frontend -- --watch\" \"npm:start:backend\"",
+    "build:frontend": "esbuild index.tsx --bundle --outfile=dist_frontend/bundle.js --platform=browser --format=esm --jsx=automatic --loader:.tsx=tsx --external:react --external:react-dom --external:react/* --external:react-dom/* && cp index.html dist_frontend/index.html && cp metadata.json dist_frontend/metadata.json",
+    "build:backend": "cd backend && npm run build",
+    "start:backend": "cd backend && npm start",
+    "build": "npm run build:frontend && npm run build:backend",
+    "start": "npm run start:backend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "esbuild": "^0.20.2"
+  }
+}

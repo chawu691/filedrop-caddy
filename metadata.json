@@ -1,0 +1,6 @@
+{
+  "name": "Universal File Drop-docker",
+  "description": "A React and Tailwind CSS web application that simulates a file upload service. Users can select or drag-and-drop files, see a simulated upload progress, and get a mock shareable link. This is a frontend demonstration; no files are actually uploaded or stored.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
