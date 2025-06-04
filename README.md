@@ -1,5 +1,5 @@
 
-# Universal File Drop (通用文件投递服务)
+# Universal File Drop (通用文件床)
 
 Universal File Drop 是一个全栈 Web 应用程序，提供简单的文件上传服务以及用于管理已上传文件的管理面板。用户可以轻松拖放或选择文件进行上传，获取可共享的链接，管理员可以查看、删除这些文件并设置其过期日期。
 
