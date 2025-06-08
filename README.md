@@ -1,6 +1,7 @@
 # Universal File Drop（任意文件床、图床）
 
 A full-stack file upload and sharing application built with React, Node.js, Express, and SQLite.
+轻量的文件床、图床，支持docker部署。
 
 ## Features
 
