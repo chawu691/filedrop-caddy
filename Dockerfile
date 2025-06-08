@@ -1,6 +1,6 @@
 
 # Stage 1: Build Frontend
-FROM node:18-alpine AS frontend-builder
+FROM dockerpull.pw/node:lts-alpine3.22 AS frontend-builder
 WORKDIR /app
 
 # Install dependencies first to leverage Docker cache
@@ -12,16 +12,17 @@ COPY index.html index.tsx App.tsx metadata.json ./
 COPY components ./components
 
 # Build frontend
-# The build script (npm run build:frontend) creates dist_frontend and copies files into it.
-# Ensure dist_frontend directory exists before cp commands in script, esbuild might create it for bundle.js
+# Create dist_frontend directory and build both JS and copy HTML files
 RUN mkdir -p dist_frontend
 RUN npm run build:frontend
+RUN npm run copy:frontend
 
 # Stage 2: Build Backend
-FROM node:18-alpine AS backend-builder
+FROM dockerpull.pw/node:lts-alpine3.22 AS backend-builder
 WORKDIR /app/backend
 
 # Install backend dependencies (including dev for tsc)
+# This will also generate/update package-lock.json in this stage
 COPY backend/package.json backend/package-lock.json* ./
 RUN npm install --include=dev
 
@@ -33,16 +34,21 @@ COPY backend/src ./src
 RUN npm run build
 
 # Stage 3: Production Image
-FROM node:18-alpine
+FROM dockerpull.pw/node:lts-alpine3.22
 ENV NODE_ENV=production
 WORKDIR /app
+
+# Install wget for health checks
+RUN apk add --no-cache wget
 
 # Create a non-root user and group for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Copy backend package.json and install only production dependencies
-# Assumes backend/package-lock.json exists for `npm ci`
-COPY backend/package.json backend/package-lock.json* ./backend/
+# Copy backend package.json and package-lock.json from the backend-builder stage
+COPY --from=backend-builder /app/backend/package.json ./backend/package.json
+COPY --from=backend-builder /app/backend/package-lock.json ./backend/package-lock.json
+
+# Install only production dependencies using the copied lock file
 RUN cd backend && npm ci --omit=dev
 
 # Copy built backend from backend-builder stage

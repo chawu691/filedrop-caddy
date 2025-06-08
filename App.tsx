@@ -1,10 +1,8 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import FileUpload from './components/FileUpload';
-import AdminPage from './components/AdminPage';
-
-const MAX_FILE_SIZE_MB = 20;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+import FileUpload from './components/FileUpload.tsx';
+import AdminPage from './components/AdminPage.tsx';
+import ErrorBoundary from './components/ErrorBoundary.tsx';
 
 const App: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -13,6 +11,9 @@ const App: React.FC = () => {
   const [uploadedFileLink, setUploadedFileLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<'upload' | 'admin'>('upload');
+  const [maxFileSizeMB, setMaxFileSizeMB] = useState<number>(20);
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null); // To be passed to FileUpload if needed for reset
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -27,6 +28,22 @@ const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  // Fetch max file size configuration
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('/api/config');
+        if (response.ok) {
+          const config = await response.json();
+          setMaxFileSizeMB(config.maxFileSizeMB);
+        }
+      } catch (err) {
+        console.error('Failed to fetch config:', err);
+      }
+    };
+    fetchConfig();
+  }, []);
+
   const resetState = useCallback(() => {
     setSelectedFile(null);
     setIsUploading(false);
@@ -38,13 +55,12 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const fileInputRef = React.useRef<HTMLInputElement>(null); // To be passed to FileUpload if needed for reset
-
   const handleFileSelect = useCallback(async (file: File) => {
     resetState();
 
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      setError(`File is too large. Max size is ${MAX_FILE_SIZE_MB}MB.`);
+    const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
+    if (file.size > maxFileSizeBytes) {
+      setError(`File is too large. Max size is ${maxFileSizeMB}MB.`);
       return;
     }
 
@@ -93,40 +109,44 @@ const App: React.FC = () => {
       setError(err.message || 'An unknown error occurred during upload.');
       setUploadProgress(0);
     }
-  }, [resetState]);
+  }, [resetState, maxFileSizeMB]);
 
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 pt-10 sm:pt-16">
-      {currentView === 'upload' ? (
-        <main className="bg-white shadow-2xl rounded-xl p-6 sm:p-10 w-full max-w-lg text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold text-red-500 mb-8">
-            Universal File Drop
-          </h1>
-          <FileUpload
-            onFileSelect={handleFileSelect}
-            selectedFile={selectedFile}
-            isUploading={isUploading}
-            uploadProgress={uploadProgress}
-            uploadedFileLink={uploadedFileLink}
-            error={error}
-            onReset={resetState}
-            maxFileSizeMB={MAX_FILE_SIZE_MB}
-            fileInputRef={fileInputRef}
-          />
-        </main>
-      ) : (
-        <AdminPage />
-      )}
-      <footer className="text-center text-xs text-gray-600 mt-10 pb-4">
-        <p>
-          Community Project | Free to Use | Educational Purpose | 
-          <a href="#upload" onClick={() => setCurrentView('upload')} className="text-blue-600 hover:underline px-1">Upload</a> |
-          <a href="#admin" onClick={() => setCurrentView('admin')} className="text-blue-600 hover:underline px-1">Admin Panel</a>
-        </p>
-        {currentView === 'upload' && <p>Files are uploaded to a server. Please be mindful of what you upload.</p>}
-      </footer>
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen flex flex-col">
+        {currentView === 'upload' ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-4 pt-10 sm:pt-16">
+            <main className="bg-white shadow-2xl rounded-xl p-6 sm:p-10 w-full max-w-4xl text-center">
+              <h1 className="text-3xl sm:text-4xl font-bold text-red-500 mb-8">
+                Universal File Drop
+              </h1>
+              <FileUpload
+                onFileSelect={handleFileSelect}
+                selectedFile={selectedFile}
+                isUploading={isUploading}
+                uploadProgress={uploadProgress}
+                uploadedFileLink={uploadedFileLink}
+                error={error}
+                onReset={resetState}
+                maxFileSizeMB={maxFileSizeMB}
+                fileInputRef={fileInputRef}
+              />
+            </main>
+          </div>
+        ) : (
+          <AdminPage />
+        )}
+        <footer className="text-center text-xs text-gray-600 mt-auto py-4">
+          <p>
+            Community Project | Free to Use | Educational Purpose |
+            <a href="#upload" onClick={() => setCurrentView('upload')} className="text-blue-600 hover:underline px-1">Upload</a> |
+            <a href="#admin" onClick={() => setCurrentView('admin')} className="text-blue-600 hover:underline px-1">Admin Panel</a>
+          </p>
+          {currentView === 'upload' && <p>Files are uploaded to a server. Please be mindful of what you upload.</p>}
+        </footer>
+      </div>
+    </ErrorBoundary>
   );
 };
 

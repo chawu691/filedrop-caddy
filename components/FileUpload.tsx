@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import UploadIcon from './UploadIcon';
+import UploadIcon from './UploadIcon.tsx';
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -155,8 +155,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
         <p className="text-sm text-gray-600 truncate w-full max-w-xs mx-auto" title={selectedFile.name}>{selectedFile.name}</p>
         <p className="text-xs text-gray-500 mb-4">{formatFileSize(selectedFile.size)}</p>
         <div className="w-full bg-gray-200 rounded-full h-2.5 my-4" aria-label="Upload progress bar container">
-          <div 
-            className={`bg-blue-600 h-2.5 rounded-full transition-all duration-150 ease-out w-[${uploadProgress}%]`}
+          <div
+            className="bg-blue-600 h-2.5 rounded-full transition-all duration-150 ease-out"
+            style={{ width: `${uploadProgress}%` }}
             role="progressbar"
             aria-valuenow={uploadProgress}
             aria-valuemin={0}

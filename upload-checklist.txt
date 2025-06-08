@@ -1,0 +1,84 @@
+📦 服务器部署文件清单
+
+✅ 必需上传的文件和目录：
+
+📁 根目录文件：
+  ✓ Dockerfile
+  ✓ docker-compose.yml
+  ✓ docker-compose.prod.yml
+  ✓ nginx.conf
+  ✓ deploy.sh
+  ✓ server-deploy.sh
+  ✓ package.json
+  ✓ package-lock.json
+  ✓ tsconfig.json
+  ✓ index.html
+  ✓ index.tsx
+  ✓ metadata.json
+  ✓ App.tsx
+  ✓ DEPLOYMENT.md
+  ✓ README.md
+  ✓ README_CN.md
+
+📁 components/ 目录：
+  ✓ AdminPage.tsx
+  ✓ ErrorBoundary.tsx
+  ✓ FileUpload.tsx
+  ✓ UploadIcon.tsx
+
+📁 backend/ 目录：
+  ✓ package.json
+  ✓ package-lock.json
+  ✓ tsconfig.json
+  ✓ src/server.ts
+  ✓ src/database.ts
+  ✓ src/routes/fileRoutes.ts
+  ✓ src/routes/adminRoutes.ts
+
+📁 可选文件：
+  ○ .env.example (环境变量示例)
+  ○ generate-ssl.sh (SSL证书生成脚本)
+
+❌ 不需要上传的文件和目录：
+  ✗ node_modules/ (Docker会重新安装)
+  ✗ backend/node_modules/ (Docker会重新安装)
+  ✗ dist_frontend/ (Docker会重新构建)
+  ✗ backend/dist/ (Docker会重新编译)
+  ✗ backend/uploads/ (运行时创建)
+  ✗ backend/database/ (运行时创建)
+  ✗ data/ (运行时创建)
+  ✗ ssl/ (运行时配置)
+  ✗ .git/ (版本控制文件)
+  ✗ .gitignore
+  ✗ .DS_Store
+  ✗ *.log
+
+📊 预估文件大小：
+  - 源码文件: ~50KB
+  - 配置文件: ~10KB
+  - 文档文件: ~20KB
+  - 总计: ~80KB (不包含node_modules)
+
+🚀 快速上传命令：
+
+方法1 - 使用rsync (推荐):
+rsync -av --exclude='node_modules' --exclude='dist_frontend' --exclude='backend/dist' --exclude='backend/uploads' --exclude='backend/database' --exclude='.git' ./ user@server:/path/to/app/
+
+方法2 - 使用tar压缩:
+tar --exclude='node_modules' --exclude='dist_frontend' --exclude='backend/dist' --exclude='backend/uploads' --exclude='backend/database' --exclude='.git' -czf app.tar.gz .
+
+方法3 - 使用Git (如果有仓库):
+git clone https://github.com/your-repo/universal-file-drop.git
+
+📋 服务器部署步骤：
+1. 上传文件到服务器
+2. 运行: chmod +x server-deploy.sh
+3. 运行: ./server-deploy.sh
+4. 选择部署模式 (开发/生产)
+5. 访问应用
+
+🔧 部署后配置：
+- 修改默认管理员密码
+- 配置SSL证书 (生产环境)
+- 设置防火墙规则
+- 配置域名解析

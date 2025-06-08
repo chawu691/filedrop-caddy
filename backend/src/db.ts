@@ -34,7 +34,32 @@ export const initializeDatabase = (): Promise<void> => {
             console.error('Error creating files table', err.message);
             return reject(err);
           }
-          resolve();
+
+          // Create settings table for configuration
+          db.run(`
+            CREATE TABLE IF NOT EXISTS settings (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              key TEXT UNIQUE NOT NULL,
+              value TEXT NOT NULL,
+              updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+          `, (settingsErr) => {
+            if (settingsErr) {
+              console.error('Error creating settings table', settingsErr.message);
+              return reject(settingsErr);
+            }
+
+            // Insert default max file size if not exists
+            db.run(`
+              INSERT OR IGNORE INTO settings (key, value) VALUES ('maxFileSizeMB', '20')
+            `, (insertErr) => {
+              if (insertErr) {
+                console.error('Error inserting default settings', insertErr.message);
+                return reject(insertErr);
+              }
+              resolve();
+            });
+          });
         });
       });
     });
