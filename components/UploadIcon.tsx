@@ -8,7 +8,9 @@ const UploadIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     height="120"
     viewBox="0 0 200 200"
     xmlns="http://www.w3.org/2000/svg"
-    className="mx-auto mb-6"
+    className="mx-auto mb-6 flex-shrink-0"
+    style={{ aspectRatio: '1 / 1' }}
+    preserveAspectRatio="xMidYMid meet"
     {...props}
   >
     <defs>
