@@ -189,7 +189,7 @@ router.post('/upload', async (req: Request, res: Response) => {
             });
             return res.status(500).json({ message: 'Failed to save file information.' });
           }
-          const fileUrl = `/files/${uniqueId}`; // Relative URL for client to use
+          const fileUrl = `/api/files/${uniqueId}`; // Correct API path for client to use
           res.status(201).json({
             message: 'File uploaded successfully!',
             fileId: this.lastID,
@@ -253,7 +253,7 @@ router.get('/files/:uniqueId', (req: Request, res: Response) => {
 
     // Set appropriate headers for file serving
     res.setHeader('Content-Type', row.mimeType);
-    res.setHeader('Content-Disposition', `inline; filename="${row.originalName}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${row.originalName}"`);
 
     res.sendFile(filePathFull, (errSendFile) => {
         if (errSendFile) {

@@ -45,11 +45,13 @@ const AdminPage: React.FC = () => {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [auth, setAuth] = useState<{ user: string; pass: string } | null>(null);
+  const [auth, setAuth] = useState<{ user: string; pass: string; expiresAt: number } | null>(null);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(true);
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [expiryDays, setExpiryDays] = useState<{ [key: string]: string }>({});
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState<boolean>(false);
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'settings' | 'stats'>('files');
@@ -57,6 +59,34 @@ const AdminPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortBy, setSortBy] = useState<'name' | 'size' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Load auth from localStorage on component mount
+  useEffect(() => {
+    const savedAuth = localStorage.getItem('adminAuth');
+    if (savedAuth) {
+      try {
+        const authData = JSON.parse(savedAuth);
+        // Check if auth is still valid (24 hours)
+        if (authData.expiresAt > Date.now()) {
+          setAuth(authData);
+          setShowAuthModal(false);
+        } else {
+          localStorage.removeItem('adminAuth');
+        }
+      } catch (error) {
+        localStorage.removeItem('adminAuth');
+      }
+    }
+  }, []);
+
+  // Save auth to localStorage when it changes
+  useEffect(() => {
+    if (auth) {
+      localStorage.setItem('adminAuth', JSON.stringify(auth));
+    } else {
+      localStorage.removeItem('adminAuth');
+    }
+  }, [auth]);
 
   const fetchFiles = useCallback(async (currentAuth: {user: string, pass: string} | null) => {
     if (!currentAuth) {
@@ -144,7 +174,9 @@ const AdminPage: React.FC = () => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
-    setAuth({ user: username, pass: password });
+    // Set auth with 24-hour expiration
+    const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+    setAuth({ user: username, pass: password, expiresAt });
   };
 
   const handleDelete = async (fileId: string) => {
@@ -173,6 +205,8 @@ const AdminPage: React.FC = () => {
         return;
       }
       setFiles(files.filter(f => f.uniqueId !== fileId));
+      // Refresh statistics after deletion
+      fetchStats(auth);
     } catch (err: any) {
       setError(err.message);
     }
@@ -219,6 +253,79 @@ const AdminPage: React.FC = () => {
 
   const handleExpiryInputChange = (fileId: string, value: string) => {
     setExpiryDays(prev => ({ ...prev, [fileId]: value }));
+  };
+
+  // Batch operations
+  const handleSelectFile = (fileId: string, checked: boolean) => {
+    const newSelected = new Set(selectedFiles);
+    if (checked) {
+      newSelected.add(fileId);
+    } else {
+      newSelected.delete(fileId);
+    }
+    setSelectedFiles(newSelected);
+    setSelectAll(newSelected.size === filteredAndSortedFiles.length);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allFileIds = new Set(filteredAndSortedFiles.map(f => f.uniqueId));
+      setSelectedFiles(allFileIds);
+    } else {
+      setSelectedFiles(new Set());
+    }
+    setSelectAll(checked);
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedFiles.size === 0) return;
+
+    if (!window.confirm(`Are you sure you want to delete ${selectedFiles.size} selected files?`)) {
+      return;
+    }
+
+    if (!auth) {
+      setError("Authentication required to delete files.");
+      setShowAuthModal(true);
+      return;
+    }
+
+    const deletePromises = Array.from(selectedFiles).map(async (fileId) => {
+      try {
+        const response = await fetch(`/api/admin/files/${fileId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': 'Basic ' + btoa(`${auth.user}:${auth.pass}`)
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to delete file ${fileId}`);
+        }
+        return fileId;
+      } catch (error) {
+        console.error(`Error deleting file ${fileId}:`, error);
+        return null;
+      }
+    });
+
+    try {
+      const results = await Promise.all(deletePromises);
+      const successfulDeletes = results.filter(id => id !== null);
+
+      // Update files list
+      setFiles(files.filter(f => !successfulDeletes.includes(f.uniqueId)));
+      setSelectedFiles(new Set());
+      setSelectAll(false);
+
+      // Refresh statistics
+      fetchStats(auth);
+
+      if (successfulDeletes.length < selectedFiles.size) {
+        setError(`Successfully deleted ${successfulDeletes.length} files, but ${selectedFiles.size - successfulDeletes.length} failed.`);
+      }
+    } catch (error) {
+      setError('Failed to delete selected files. Please try again.');
+    }
   };
 
   const handleUpdateSettings = async () => {
@@ -373,6 +480,7 @@ const AdminPage: React.FC = () => {
                 onClick={() => {
                   setAuth(null);
                   setShowAuthModal(true);
+                  localStorage.removeItem('adminAuth');
                 }}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
               >
@@ -571,6 +679,15 @@ const AdminPage: React.FC = () => {
                 </div>
 
                 <div className="flex space-x-3">
+                  {selectedFiles.size > 0 && (
+                    <button
+                      onClick={handleBatchDelete}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      Delete Selected ({selectedFiles.size})
+                    </button>
+                  )}
+
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
@@ -607,6 +724,14 @@ const AdminPage: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <input
+                          type="checkbox"
+                          checked={selectAll}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded</th>
@@ -617,6 +742,14 @@ const AdminPage: React.FC = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredAndSortedFiles.map(file => (
                       <tr key={file.uniqueId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={selectedFiles.has(file.uniqueId)}
+                            onChange={(e) => handleSelectFile(file.uniqueId, e.target.checked)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
@@ -629,7 +762,7 @@ const AdminPage: React.FC = () => {
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
                                 <a
-                                  href={`/files/${file.uniqueId}`}
+                                  href={`/api/files/${file.uniqueId}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:text-blue-800 hover:underline"
