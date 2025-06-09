@@ -73,7 +73,7 @@ const AdminPage: React.FC = () => {
         } else {
           localStorage.removeItem('adminAuth');
         }
-      } catch (error) {
+      } catch {
         localStorage.removeItem('adminAuth');
       }
     }
@@ -110,7 +110,10 @@ const AdminPage: React.FC = () => {
         return;
       }
       if (!response.ok) {
-        throw new Error(`Failed to fetch files: ${response.statusText}`);
+        setError(`Failed to fetch files: ${response.statusText}`);
+        setFiles([]);
+        setIsLoading(false);
+        return;
       }
       const data = await response.json();
       setFiles(data);
@@ -200,7 +203,7 @@ const AdminPage: React.FC = () => {
             setAuth(null);
         } else {
             const errData = await response.json();
-            throw new Error(errData.message || 'Failed to delete file');
+            setError(errData.message || 'Failed to delete file');
         }
         return;
       }
@@ -239,7 +242,7 @@ const AdminPage: React.FC = () => {
             setAuth(null);
         } else {
             const errData = await response.json();
-            throw new Error(errData.message || 'Failed to set expiry');
+            setError(errData.message || 'Failed to set expiry');
         }
         return;
       }
@@ -254,6 +257,28 @@ const AdminPage: React.FC = () => {
   const handleExpiryInputChange = (fileId: string, value: string) => {
     setExpiryDays(prev => ({ ...prev, [fileId]: value }));
   };
+
+  // Filter and sort files
+  const filteredAndSortedFiles = files
+    .filter(file =>
+      file.originalName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      file.mimeType.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.originalName.localeCompare(b.originalName);
+          break;
+        case 'size':
+          comparison = a.size - b.size;
+          break;
+        case 'date':
+          comparison = new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime();
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
 
   // Batch operations
   const handleSelectFile = (fileId: string, checked: boolean) => {
@@ -299,7 +324,8 @@ const AdminPage: React.FC = () => {
           }
         });
         if (!response.ok) {
-          throw new Error(`Failed to delete file ${fileId}`);
+          console.error(`Failed to delete file ${fileId}: ${response.statusText}`);
+          return null;
         }
         return fileId;
       } catch (error) {
@@ -359,27 +385,7 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  // Filter and sort files
-  const filteredAndSortedFiles = files
-    .filter(file =>
-      file.originalName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      file.mimeType.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => {
-      let comparison = 0;
-      switch (sortBy) {
-        case 'name':
-          comparison = a.originalName.localeCompare(b.originalName);
-          break;
-        case 'size':
-          comparison = a.size - b.size;
-          break;
-        case 'date':
-          comparison = new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime();
-          break;
-      }
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
+
 
   if (showAuthModal) {
     return (
@@ -515,7 +521,7 @@ const AdminPage: React.FC = () => {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as 'files' | 'settings' | 'stats')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === tab.id
                       ? 'border-blue-500 text-blue-600'
@@ -690,7 +696,7 @@ const AdminPage: React.FC = () => {
 
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
+                    onChange={(e) => setSortBy(e.target.value as 'name' | 'size' | 'date')}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="date">Sort by Date</option>
