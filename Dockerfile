@@ -25,11 +25,9 @@ WORKDIR /app/backend
 RUN apk add --no-cache python3 make g++ sqlite-dev
 
 # Install backend dependencies (including dev for tsc)
-# This will also generate/update package-lock.json in this stage
 COPY backend/package.json backend/package-lock.json* ./
-# Set npm config to use prebuild binaries for sqlite3
-RUN npm config set target_platform linux
-RUN npm config set target_arch x64
+# Set environment variables for sqlite3 compilation
+ENV PYTHON=/usr/bin/python3
 RUN npm install --include=dev
 
 # Copy backend source files
