@@ -8,7 +8,7 @@ COPY package.json package-lock.json* ./
 RUN npm install
 
 # Copy frontend source files
-COPY index.html index.tsx App.tsx metadata.json ./
+COPY index.html index.tsx App.tsx metadata.json tsconfig.json ./
 COPY components ./components
 
 # Build frontend
@@ -21,9 +21,15 @@ RUN npm run copy:frontend
 FROM dockerpull.pw/node:lts-alpine3.22 AS backend-builder
 WORKDIR /app/backend
 
+# Install build dependencies for native modules (sqlite3)
+RUN apk add --no-cache python3 make g++ sqlite-dev
+
 # Install backend dependencies (including dev for tsc)
 # This will also generate/update package-lock.json in this stage
 COPY backend/package.json backend/package-lock.json* ./
+# Set npm config to use prebuild binaries for sqlite3
+RUN npm config set target_platform linux
+RUN npm config set target_arch x64
 RUN npm install --include=dev
 
 # Copy backend source files
@@ -38,8 +44,8 @@ FROM dockerpull.pw/node:lts-alpine3.22
 ENV NODE_ENV=production
 WORKDIR /app
 
-# Install wget for health checks
-RUN apk add --no-cache wget
+# Install runtime dependencies for sqlite3 and health checks
+RUN apk add --no-cache wget sqlite
 
 # Create a non-root user and group for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
