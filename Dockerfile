@@ -8,7 +8,7 @@ COPY package.json package-lock.json* ./
 RUN npm install
 
 # Copy frontend source files
-COPY index.html index.tsx App.tsx metadata.json tsconfig.json ./
+COPY index.html index.tsx App.tsx metadata.json ./
 COPY components ./components
 
 # Build frontend
