@@ -1,147 +1,146 @@
-# Universal File Drop（任意文件床、图床）
+# Universal File Drop
 
-A full-stack file upload and sharing application built with React, Node.js, Express, and SQLite.
-轻量的文件床、图床，支持docker部署。
+> 🌐 [English](./README-en.md) | 中文 | [部署指南](./DEPLOYMENT.md)
 
-## Features
+轻量级文件床/图床应用，支持直链访问，完美适配网页嵌入。
 
-- **File Upload**: Drag & drop or click to upload files (configurable size limit)
-- **File Sharing**: Get shareable links for uploaded files
-- **Admin Panel**: Manage uploaded files, set expiration dates, delete files
-- **System Statistics**: View file upload statistics and system metrics
-- **Configurable Settings**: Adjust file size limits through admin panel
-- **Secure Storage**: Files stored on server with SQLite database tracking
-- **Responsive Design**: Modern UI that works on desktop and mobile devices
-- **Docker Ready**: Easy deployment with Docker and Docker Compose
+## ✨ 核心特性
 
-## Quick Start
+- **🔗 真正的直链支持**: 媒体文件提供带扩展名的完整直链，支持网页直接嵌入
+- **📁 文件上传**: 拖拽上传或点击选择，支持所有常见文件类型
+- **🎯 智能链接**: 图片/视频/音频自动生成 `/api/direct/id.ext` 格式直链
+- **👨‍💼 管理后台**: 文件管理、过期设置、系统统计
+- **⚙️ 灵活配置**: 可调整文件大小限制等设置
+- **🛡️ 安全可靠**: 文件类型验证、大小限制、管理员认证
+- **📱 响应式设计**: 支持桌面和移动设备
+- **🐳 Docker就绪**: 一键部署，支持Docker和Docker Compose
 
-### Option 1: Local Development
+## 🚀 快速开始
 
-**Prerequisites:** Node.js (v16 or higher)
+### 方式一：Docker Compose（推荐）
 
-1. Clone the repository and install dependencies:
-   ```bash
-   git clone <repository-url>
-   cd universal-file-drop
-   npm install
-   cd backend && npm install && cd ..
-   ```
-
-2. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-3. Open your browser and navigate to `http://localhost:3001`
-
-### Option 2: Docker (Recommended for Production)
-
-**Prerequisites:** Docker and Docker Compose
-
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd universal-file-drop
-   ```
-
-2. Start with Docker Compose:
-   ```bash
-   # Quick start - Development mode
-   docker-compose up -d
-
-   # Production mode with Nginx reverse proxy
-   docker-compose -f docker-compose.prod.yml up -d
-
-   # Or use the deployment script (recommended)
-   ./deploy.sh dev   # Development mode
-   ./deploy.sh prod  # Production mode
-   ```
-
-3. Access the application:
-   - Development: `http://localhost:3001`
-   - Production: `http://localhost` (with Nginx)
-
-### Option 3: Manual Docker Build
+**前置要求：** Docker 和 Docker Compose
 
 ```bash
-# Build the image
+# 克隆项目
+git clone <repository-url>
+cd universal-file-drop
+
+# 开发环境
+docker-compose up -d
+
+# 生产环境（包含Nginx反向代理）
+docker-compose -f docker-compose.prod.yml up -d
+
+# 或使用部署脚本
+./deploy.sh dev   # 开发模式
+./deploy.sh prod  # 生产模式
+```
+
+访问：
+- 开发环境：`http://localhost:3001`
+- 生产环境：`http://localhost`
+
+### 方式二：手动Docker构建
+
+```bash
+# 构建镜像
 docker build -t universal-file-drop .
 
-# Run the container
+# 运行容器
 docker run -d \
   -p 3001:3001 \
   -v $(pwd)/data/uploads:/app/backend/uploads \
   -v $(pwd)/data/database:/app/backend/database \
+  -e ADMIN_USER="admin" \
+  -e ADMIN_PASSWORD="your_password" \
   --name universal-file-drop \
   universal-file-drop
 ```
 
-## Admin Access
+### 方式三：本地开发
 
-- **URL**: `http://localhost:3001/#admin`
-- **Username**: `admin`
-- **Password**: `password`
+**前置要求：** Node.js 16+
 
-## Configuration
+```bash
+# 安装依赖
+npm install
+cd backend && npm install && cd ..
 
-### Environment Variables
-
-- `PORT`: Server port (default: 3001)
-- `NODE_ENV`: Environment mode (development/production)
-
-### File Size Limits
-
-Default maximum file size is 20MB. You can change this through the admin panel under Settings.
-
-## Data Persistence
-
-When using Docker, make sure to mount volumes for data persistence:
-
-- `/app/backend/uploads` - Uploaded files
-- `/app/backend/database` - SQLite database
-
-## Production Deployment
-
-For production deployment, consider:
-
-1. **Use Docker Compose with Nginx profile** for reverse proxy and SSL termination
-2. **Set up SSL certificates** in the `ssl/` directory
-3. **Configure proper backup** for the database and uploads directories
-4. **Set up monitoring** and health checks
-5. **Use environment variables** for sensitive configuration
-
-## Development
-
-### Project Structure
-
-```
-├── components/          # React components
-├── backend/            # Node.js backend
-│   ├── src/           # TypeScript source
-│   ├── dist/          # Compiled JavaScript
-│   ├── uploads/       # Uploaded files
-│   └── database/      # SQLite database
-├── dist_frontend/     # Built frontend assets
-└── docker-compose.yml # Docker configuration
+# 启动开发服务器
+npm run dev
 ```
 
-### Available Scripts
+访问：`http://localhost:3001`
 
-**Development Scripts:**
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build both frontend and backend for production
-- `npm run build:frontend` - Build frontend only
-- `npm run build:backend` - Build backend only
-- `npm start` - Start production server
+## 🔗 直链使用示例
 
-**Deployment Scripts:**
-- `./deploy.sh dev` - Start development environment with Docker
-- `./deploy.sh prod` - Start production environment with Nginx
-- `./deploy.sh stop` - Stop all services
-- `./deploy.sh logs` - View application logs
-- `./deploy.sh clean` - Clean up all containers and volumes
+上传文件后，您将获得可直接嵌入网页的链接：
 
-## License
+```html
+<!-- 图片直接嵌入 -->
+<img src="http://your-domain/api/direct/abc123.jpg" alt="图片">
 
-This project is open source and available under the MIT License.
+<!-- 视频直接嵌入 -->
+<video controls src="http://your-domain/api/direct/abc123.mp4"></video>
+
+<!-- 音频直接嵌入 -->
+<audio controls src="http://your-domain/api/direct/abc123.mp3"></audio>
+
+<!-- PDF文档嵌入 -->
+<iframe src="http://your-domain/api/direct/abc123.pdf" width="100%" height="600px"></iframe>
+```
+
+## 👨‍💼 管理后台
+
+- **访问地址**: `http://localhost:3001/#admin`
+- **默认账号**: `admin` / `password`
+- **功能**: 文件管理、过期设置、系统统计、配置调整
+
+## ⚙️ 配置说明
+
+### 环境变量
+- `PORT`: 服务端口（默认：3001）
+- `ADMIN_USER`: 管理员用户名
+- `ADMIN_PASSWORD`: 管理员密码
+
+### 文件大小限制
+默认最大20MB，可通过管理后台调整
+
+## 📁 项目结构
+
+```
+├── components/          # React组件
+├── backend/            # Node.js后端
+│   ├── src/           # TypeScript源码
+│   ├── uploads/       # 上传文件存储
+│   └── database/      # SQLite数据库
+├── dist_frontend/     # 前端构建产物
+└── docker-compose.yml # Docker配置
+```
+
+## 🛠️ 开发脚本
+
+```bash
+# 开发
+npm run dev              # 启动开发服务器
+npm run build           # 构建生产版本
+
+# 部署
+./deploy.sh dev         # 开发环境
+./deploy.sh prod        # 生产环境
+./deploy.sh stop        # 停止服务
+./deploy.sh logs        # 查看日志
+```
+
+## 🔧 技术栈
+
+- **前端**: React 19 + TypeScript + Tailwind CSS
+- **后端**: Node.js + Express + TypeScript
+- **数据库**: SQLite
+- **构建**: esbuild
+- **部署**: Docker + Docker Compose + Nginx
+
+## 📄 许可证
+
+MIT License - 开源免费使用

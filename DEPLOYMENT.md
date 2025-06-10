@@ -120,40 +120,16 @@ sudo ufw allow 80
 sudo ufw allow 443
 ```
 
-## 🔧 高级配置
+## 🔧 环境变量配置
 
-### SSL证书配置
-
-1. 将SSL证书放在 `ssl/` 目录：
+创建 `.env` 文件（可选）：
 ```bash
-mkdir ssl
-# 复制你的证书文件
-cp /path/to/your/cert.pem ssl/
-cp /path/to/your/key.pem ssl/
-```
-
-2. 或者使用Let's Encrypt：
-```bash
-# 安装certbot
-sudo apt install certbot
-
-# 获取证书
-sudo certbot certonly --standalone -d your-domain.com
-
-# 复制证书到项目目录
-sudo cp /etc/letsencrypt/live/your-domain.com/fullchain.pem ssl/cert.pem
-sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem ssl/key.pem
-```
-
-### 环境变量配置
-
-创建 `.env` 文件：
-```bash
-# 复制示例文件
-cp .env.example .env
-
-# 编辑配置
-nano .env
+# 在项目根目录创建
+cat > .env << EOF
+ADMIN_USER=your_admin_username
+ADMIN_PASSWORD=your_secure_password
+PORT=3001
+EOF
 ```
 
 ## 📊 监控和维护

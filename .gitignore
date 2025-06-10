@@ -95,6 +95,12 @@ Thumbs.db
 *.bak
 *.backup
 
-# Project specific
+# Project specific - temporary files
 PROJECT_ANALYSIS_REPORT.md
-test-embedding.html
+QUICK_START_GUIDE.md
+test-*.html
+*-test.html
+generate-ssl.sh
+vite.config.ts
+upload-checklist.txt
+DOCS_SUMMARY.md
