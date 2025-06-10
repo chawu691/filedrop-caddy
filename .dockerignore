@@ -22,13 +22,11 @@ backend/dist
 !.env.example
 !.env.sample
 
-# Docker files themselves (if in context root)
-Dockerfile
-Dockerfile.*
+# Docker files (keep some for multi-stage builds)
 .dockerignore
-.dockerignore.*
 docker-compose.yml
 docker-compose.yaml
+docker-compose.*.yml
 
 # OS generated files
 .DS_Store
@@ -61,6 +59,24 @@ coverage
 # Sensitive data / Local data - these should be volumes in production
 # Excluding contents from build context if they exist locally
 backend/uploads/*
-!backend/uploads/.gitkeep 
+!backend/uploads/.gitkeep
 backend/database/*
 !backend/database/.gitkeep
+
+# Documentation and analysis files
+README*.md
+DEPLOYMENT.md
+PROJECT_ANALYSIS_REPORT.md
+QUICK_START_GUIDE.md
+test-embedding.html
+upload-checklist.txt
+
+# Scripts (deployment scripts should be separate)
+deploy.sh
+server-deploy.sh
+start.sh
+generate-ssl.sh
+
+# Config files that aren't needed in container
+nginx.conf
+nginx.default.conf

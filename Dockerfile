@@ -22,12 +22,14 @@ FROM dockerpull.pw/node:lts-alpine3.22 AS backend-builder
 WORKDIR /app/backend
 
 # Install build dependencies for native modules (sqlite3)
-RUN apk add --no-cache python3 make g++ sqlite-dev
+# Add py3-setuptools to fix distutils issue
+RUN apk add --no-cache python3 python3-dev py3-setuptools make g++ sqlite-dev
 
 # Install backend dependencies (including dev for tsc)
 COPY backend/package.json backend/package-lock.json* ./
 # Set environment variables for sqlite3 compilation
 ENV PYTHON=/usr/bin/python3
+ENV npm_config_build_from_source=true
 RUN npm install --include=dev
 
 # Copy backend source files
@@ -52,8 +54,8 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=backend-builder /app/backend/package.json ./backend/package.json
 COPY --from=backend-builder /app/backend/package-lock.json ./backend/package-lock.json
 
-# Install only production dependencies using the copied lock file
-RUN cd backend && npm ci --omit=dev
+# Copy the already built node_modules from backend-builder to avoid rebuilding sqlite3
+COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules
 
 # Copy built backend from backend-builder stage
 COPY --from=backend-builder /app/backend/dist ./backend/dist
