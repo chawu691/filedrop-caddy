@@ -104,7 +104,7 @@ const frontendDistPath = path.join(__dirname, '..', '..', 'dist_frontend');
 app.use(express.static(frontendDistPath));
 
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error('Unhandled error:', err);
   if (!res.headersSent) {
     res.status(500).json({ message: 'Internal server error' });
