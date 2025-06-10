@@ -85,17 +85,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
     fileInputRef.current?.click();
   };
 
-  const copyToClipboard = useCallback((linkType: 'direct' | 'download' = 'direct') => {
+  const copyToClipboard = useCallback(() => {
     if (uploadedFileLink) {
-      // Create different URL types based on the linkType parameter
-      let urlToCopy: string;
-      if (linkType === 'download') {
-        urlToCopy = window.location.origin + uploadedFileLink + '?download=true';
-      } else {
-        urlToCopy = window.location.origin + uploadedFileLink;
-      }
-
-      navigator.clipboard.writeText(urlToCopy).then(() => {
+      const fullUrl = window.location.origin + uploadedFileLink;
+      navigator.clipboard.writeText(fullUrl).then(() => {
         setLinkCopied(true);
         setTimeout(() => setLinkCopied(false), 2000);
       }).catch(err => console.error('Failed to copy: ', err));
@@ -123,67 +116,26 @@ const FileUpload: React.FC<FileUploadProps> = ({
   }
 
   if (uploadedFileLink) {
-    const directUrl = window.location.origin + uploadedFileLink;
-    const downloadUrl = window.location.origin + uploadedFileLink + '?download=true';
-
     return (
       <div className="text-center p-6 bg-green-50 border border-green-200 rounded-lg">
         <h2 className="text-xl font-semibold text-green-700 mb-3">File Uploaded Successfully!</h2>
-
-        {/* Direct Link Section */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-2">🔗 Direct Link (for embedding in web pages):</p>
-          <div className="flex items-center justify-center space-x-2 mb-2">
+        <p className="text-sm text-gray-600 mb-2">🔗 Direct Link (ready for embedding):</p>
+        <div className="flex items-center justify-center space-x-2 my-4">
             <input
                 type="text"
-                value={directUrl}
+                value={window.location.origin + uploadedFileLink}
                 readOnly
                 className="w-full flex-grow p-2 border border-gray-300 rounded-md text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="Direct file link"
             />
             <button
-                onClick={() => copyToClipboard('direct')}
+                onClick={copyToClipboard}
                 className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 whitespace-nowrap"
-                aria-label={linkCopied ? 'Link copied to clipboard' : 'Copy direct link to clipboard'}
+                aria-label={linkCopied ? 'Link copied to clipboard' : 'Copy link to clipboard'}
             >
-                {linkCopied ? 'Copied!' : 'Copy'}
+                {linkCopied ? 'Copied!' : 'Copy Link'}
             </button>
-          </div>
         </div>
-
-        {/* Download Link Section */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-2">⬇️ Download Link (forces file download):</p>
-          <div className="flex items-center justify-center space-x-2 mb-2">
-            <input
-                type="text"
-                value={downloadUrl}
-                readOnly
-                className="w-full flex-grow p-2 border border-gray-300 rounded-md text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500"
-                aria-label="Download file link"
-            />
-            <button
-                onClick={() => copyToClipboard('download')}
-                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 whitespace-nowrap"
-                aria-label="Copy download link to clipboard"
-            >
-                Copy
-            </button>
-          </div>
-        </div>
-
-        {/* Preview/Test Link */}
-        <div className="mb-4">
-          <a
-            href={directUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75"
-          >
-            🔍 Preview File
-          </a>
-        </div>
-
         <button
           onClick={onReset}
           className="mt-4 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-6 rounded-full transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"

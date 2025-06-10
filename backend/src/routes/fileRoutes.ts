@@ -1,7 +1,7 @@
 // Declaration for __dirname to satisfy TypeScript when @types/node might be missing/misconfigured
 declare var __dirname: string;
 
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -13,7 +13,7 @@ const router = express.Router();
 
 // Function to get current max file size from database
 const getMaxFileSize = (): Promise<number> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const db = getDb();
     db.get('SELECT value FROM settings WHERE key = ?', ['maxFileSizeMB'], (err: Error | null, row: any) => {
       if (err) {
@@ -189,13 +189,19 @@ router.post('/upload', async (req: Request, res: Response) => {
             });
             return res.status(500).json({ message: 'Failed to save file information.' });
           }
-          const fileUrl = `/api/files/${uniqueId}`; // Correct API path for client to use
+          // Create both regular and direct URLs
+          const fileUrl = `/api/files/${uniqueId}`;
+          const fileExtension = path.extname(originalname);
+          const directUrl = shouldDisplayInline(mimetype) && fileExtension
+            ? `/api/direct/${uniqueId}${fileExtension}`
+            : fileUrl;
+
           res.status(201).json({
             message: 'File uploaded successfully!',
             fileId: this.lastID,
             uniqueId: uniqueId,
             fileName: originalname,
-            fileUrl: fileUrl
+            fileUrl: directUrl
           });
         }
       );
@@ -227,10 +233,8 @@ const shouldDisplayInline = (mimeType: string): boolean => {
   return inlineTypes.some(type => mimeType.startsWith(type));
 };
 
-// Route for file access with download parameter control
-router.get('/files/:uniqueId', (req: Request, res: Response) => {
-  const { uniqueId } = req.params;
-  const { download } = req.query; // ?download=true forces download
+// Helper function to serve file
+const serveFile = (req: Request, res: Response, uniqueId: string) => {
   const db = getDb();
 
   db.get('SELECT * FROM files WHERE uniqueId = ?', [uniqueId], (dbErr: Error | null, row: FileDBRow) => {
@@ -246,9 +250,6 @@ router.get('/files/:uniqueId', (req: Request, res: Response) => {
     if (row.expiresAt) {
       const expiryDate = new Date(row.expiresAt);
       if (expiryDate < new Date()) {
-        // Optional: Delete expired file from disk and DB
-        // fs.unlink(path.join(__dirname, '..', '..', 'uploads', row.filePath), () => {});
-        // db.run('DELETE FROM files WHERE uniqueId = ?', [uniqueId], () => {});
         return res.status(410).json({ message: 'File has expired and is no longer available.' });
       }
     }
@@ -258,44 +259,47 @@ router.get('/files/:uniqueId', (req: Request, res: Response) => {
     // Check if file exists on disk
     if (!fs.existsSync(filePathFull)) {
         console.error(`File ${row.filePath} for uniqueId ${uniqueId} not found on disk.`);
-        // Optionally, clean up DB record if file is missing
-        // db.run('DELETE FROM files WHERE uniqueId = ?', [uniqueId], () => {});
         return res.status(404).json({ message: 'File not found on server storage.' });
     }
 
     // Set appropriate headers for file serving
     res.setHeader('Content-Type', row.mimeType);
 
-    // Determine Content-Disposition based on file type and query parameter
-    if (download === 'true' || !shouldDisplayInline(row.mimeType)) {
-      // Force download
-      res.setHeader('Content-Disposition', `attachment; filename="${row.originalName}"`);
+    // For media files, display inline; others force download
+    if (shouldDisplayInline(row.mimeType)) {
+      // Use encodeURIComponent to handle Chinese characters properly
+      const encodedFilename = encodeURIComponent(row.originalName);
+      res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodedFilename}`);
     } else {
-      // Display inline (for direct linking in web pages)
-      res.setHeader('Content-Disposition', `inline; filename="${row.originalName}"`);
+      const encodedFilename = encodeURIComponent(row.originalName);
+      res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedFilename}`);
     }
 
     // Add cache headers for better performance
-    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
     res.setHeader('ETag', `"${row.uniqueId}-${row.size}"`);
 
     res.sendFile(filePathFull, (errSendFile) => {
         if (errSendFile) {
             console.error("Error sending file:", errSendFile);
-            // Check if headers were already sent
             if (!res.headersSent) {
                  res.status(500).json({ message: "Error sending file." });
             }
         }
     });
   });
+};
+
+// Route for file access
+router.get('/files/:uniqueId', (req: Request, res: Response) => {
+  const { uniqueId } = req.params;
+  serveFile(req, res, uniqueId);
 });
 
-// New route for direct file access (alternative URL structure)
-router.get('/direct/:uniqueId/:filename?', (req: Request, res: Response) => {
+// Route for direct file access with extension (for better compatibility)
+router.get('/direct/:uniqueId.:extension', (req: Request, res: Response) => {
   const { uniqueId } = req.params;
-  // Redirect to the main file route with inline display
-  res.redirect(`/api/files/${uniqueId}`);
+  serveFile(req, res, uniqueId);
 });
 
 // Get current max file size setting

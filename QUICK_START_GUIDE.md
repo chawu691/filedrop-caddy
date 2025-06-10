@@ -1,8 +1,12 @@
-# 🚀 快速启动指南 - 文件直链功能已修复
+# 🚀 快速启动指南 - 文件直链功能已完善
 
 ## 📋 修复内容概述
 
-✅ **主要问题已解决**: 文件现在支持直链访问，可以在网页中直接嵌入图片、视频等媒体文件！
+✅ **核心功能优化**:
+- 媒体文件提供带扩展名的完整直链
+- 修复中文文件名乱码问题
+- 简化界面，专注文件床核心功能
+- 清理代码警告
 
 ## 🏃‍♂️ 快速启动
 
@@ -26,42 +30,37 @@ npm start
 #### 步骤 1: 上传文件
 1. 访问 http://localhost:3001
 2. 上传一个图片文件
-3. 上传成功后，您会看到两种链接：
-   - 🔗 **直链** (用于网页嵌入)
-   - ⬇️ **下载链接** (强制下载)
+3. 上传成功后，您会看到带扩展名的完整直链
 
 #### 步骤 2: 测试直链
 ```html
-<!-- 现在这样的代码可以正常工作了！ -->
-<img src="http://localhost:3001/api/files/your-unique-id" alt="图片">
-<video controls src="http://localhost:3001/api/files/your-unique-id"></video>
-<audio controls src="http://localhost:3001/api/files/your-unique-id"></audio>
+<!-- 媒体文件现在提供带扩展名的完整URL！ -->
+<img src="http://localhost:3001/api/direct/unique-id.jpg" alt="图片">
+<video controls src="http://localhost:3001/api/direct/unique-id.mp4"></video>
+<audio controls src="http://localhost:3001/api/direct/unique-id.mp3"></audio>
+<iframe src="http://localhost:3001/api/direct/unique-id.pdf" width="100%" height="600px"></iframe>
 ```
 
-#### 步骤 3: 使用测试页面
-1. 打开 `test-file-access.html` 文件
-2. 粘贴您的文件 URL
-3. 点击各种测试按钮验证功能
+## 🔧 核心功能说明
 
-## 🔧 新功能说明
+### 智能直链生成
+- **媒体文件**: 自动生成带扩展名的直链 `/api/direct/id.ext`
+- **其他文件**: 使用标准链接 `/api/files/id`
+- **中文支持**: 完美支持中文文件名，无乱码
 
-### 智能文件显示
-- **图片、视频、音频、PDF**: 自动设置为 `inline`，支持直接嵌入
-- **其他文件类型**: 默认下载
-- **强制下载**: 添加 `?download=true` 参数
+### 前端优化
+- ✅ 简洁的单一直链显示
+- ✅ 专注文件床核心功能
+- ✅ 管理面板智能链接复制
 
-### 前端改进
-- ✅ 分别显示直链和下载链接
-- ✅ 添加文件预览按钮
-- ✅ 管理面板快速复制链接功能
-
-### API 使用示例
+### API 路由
 ```bash
-# 直接访问 (inline 显示)
-curl -I http://localhost:3001/api/files/unique-id
+# 媒体文件直链 (带扩展名)
+http://localhost:3001/api/direct/unique-id.jpg
+http://localhost:3001/api/direct/unique-id.mp4
 
-# 强制下载
-curl -I http://localhost:3001/api/files/unique-id?download=true
+# 标准文件访问
+http://localhost:3001/api/files/unique-id
 ```
 
 ## 🛡️ 安全性保证

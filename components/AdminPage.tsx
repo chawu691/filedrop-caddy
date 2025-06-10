@@ -781,7 +781,13 @@ const AdminPage: React.FC = () => {
                                 <span>{file.mimeType}</span>
                                 <button
                                   onClick={() => {
-                                    const directUrl = `${window.location.origin}/api/files/${file.uniqueId}`;
+                                    // Create direct URL with extension for media files
+                                    const fileExtension = file.originalName.split('.').pop();
+                                    const isMediaFile = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'mp4', 'webm', 'mp3', 'wav', 'pdf'].includes(fileExtension?.toLowerCase() || '');
+                                    const directUrl = isMediaFile && fileExtension
+                                      ? `${window.location.origin}/api/direct/${file.uniqueId}.${fileExtension}`
+                                      : `${window.location.origin}/api/files/${file.uniqueId}`;
+
                                     navigator.clipboard.writeText(directUrl).then(() => {
                                       alert('Direct link copied to clipboard!');
                                     }).catch(err => console.error('Failed to copy: ', err));
