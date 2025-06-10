@@ -217,11 +217,23 @@ interface FileDBRow {
   expiresAt?: string | null;
 }
 
+// Helper function to determine if file should be displayed inline
+const shouldDisplayInline = (mimeType: string): boolean => {
+  const inlineTypes = [
+    'image/', 'video/', 'audio/', 'text/plain', 'application/pdf',
+    'text/html', 'text/css', 'application/javascript', 'application/json',
+    'text/xml', 'application/xml', 'text/markdown'
+  ];
+  return inlineTypes.some(type => mimeType.startsWith(type));
+};
+
+// Route for file access with download parameter control
 router.get('/files/:uniqueId', (req: Request, res: Response) => {
   const { uniqueId } = req.params;
+  const { download } = req.query; // ?download=true forces download
   const db = getDb();
 
-  db.get('SELECT * FROM files WHERE uniqueId = ?', [uniqueId], (dbErr: Error | null, row: FileDBRow) => { 
+  db.get('SELECT * FROM files WHERE uniqueId = ?', [uniqueId], (dbErr: Error | null, row: FileDBRow) => {
     if (dbErr) {
       console.error('Error fetching file from DB:', dbErr);
       return res.status(500).json({ message: 'Error retrieving file information.' });
@@ -240,9 +252,9 @@ router.get('/files/:uniqueId', (req: Request, res: Response) => {
         return res.status(410).json({ message: 'File has expired and is no longer available.' });
       }
     }
-    
+
     const filePathFull = path.join(__dirname, '..', '..', 'uploads', row.filePath);
-    
+
     // Check if file exists on disk
     if (!fs.existsSync(filePathFull)) {
         console.error(`File ${row.filePath} for uniqueId ${uniqueId} not found on disk.`);
@@ -253,7 +265,19 @@ router.get('/files/:uniqueId', (req: Request, res: Response) => {
 
     // Set appropriate headers for file serving
     res.setHeader('Content-Type', row.mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${row.originalName}"`);
+
+    // Determine Content-Disposition based on file type and query parameter
+    if (download === 'true' || !shouldDisplayInline(row.mimeType)) {
+      // Force download
+      res.setHeader('Content-Disposition', `attachment; filename="${row.originalName}"`);
+    } else {
+      // Display inline (for direct linking in web pages)
+      res.setHeader('Content-Disposition', `inline; filename="${row.originalName}"`);
+    }
+
+    // Add cache headers for better performance
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
+    res.setHeader('ETag', `"${row.uniqueId}-${row.size}"`);
 
     res.sendFile(filePathFull, (errSendFile) => {
         if (errSendFile) {
@@ -265,6 +289,13 @@ router.get('/files/:uniqueId', (req: Request, res: Response) => {
         }
     });
   });
+});
+
+// New route for direct file access (alternative URL structure)
+router.get('/direct/:uniqueId/:filename?', (req: Request, res: Response) => {
+  const { uniqueId } = req.params;
+  // Redirect to the main file route with inline display
+  res.redirect(`/api/files/${uniqueId}`);
 });
 
 // Get current max file size setting

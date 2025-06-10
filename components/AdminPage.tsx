@@ -772,12 +772,26 @@ const AdminPage: React.FC = () => {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:text-blue-800 hover:underline"
-                                  title={file.originalName}
+                                  title={`${file.originalName} - Click to preview`}
                                 >
                                   {file.originalName}
                                 </a>
                               </div>
-                              <div className="text-sm text-gray-500">{file.mimeType}</div>
+                              <div className="text-sm text-gray-500 flex items-center space-x-2">
+                                <span>{file.mimeType}</span>
+                                <button
+                                  onClick={() => {
+                                    const directUrl = `${window.location.origin}/api/files/${file.uniqueId}`;
+                                    navigator.clipboard.writeText(directUrl).then(() => {
+                                      alert('Direct link copied to clipboard!');
+                                    }).catch(err => console.error('Failed to copy: ', err));
+                                  }}
+                                  className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded transition-colors"
+                                  title="Copy direct link"
+                                >
+                                  📋 Copy Link
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </td>

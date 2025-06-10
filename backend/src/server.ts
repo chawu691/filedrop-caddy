@@ -92,11 +92,8 @@ app.get('/api/health', (req: Request, res: Response) => {
 app.use('/api/admin', rateLimit(15 * 60 * 1000, 50), adminRoutes); // 50 admin requests per 15 minutes
 app.use('/api', rateLimit(15 * 60 * 1000, 20), fileRoutes); // 20 file operations per 15 minutes
 
-// Serve uploaded files statically from the 'uploads' directory (relative to backend/ )
-// The path for files will be /files/:fileId which is handled by fileRoutes, 
-// but direct access if needed for other static assets in uploads can be set up.
-// For actual file serving, fileRoutes.ts uses res.sendFile or res.download.
-app.use('/uploads', express.static(uploadsDir));
+// Note: File serving is handled by fileRoutes.ts (/api/files/:uniqueId)
+// We don't expose the uploads directory directly for security reasons
 
 
 // Serve static frontend files
