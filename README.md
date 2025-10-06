@@ -14,6 +14,7 @@
 - **🛡️ 安全可靠**: 文件类型验证、大小限制、管理员认证
 - **📱 响应式设计**: 支持桌面和移动设备
 - **🐳 Docker就绪**: 一键部署，支持Docker和Docker Compose
+- **🔒 自动HTTPS**: 通过Caddy自动配置和续期Let's Encrypt证书
 
 ## 🚀 快速开始
 
@@ -29,7 +30,7 @@ cd universal-file-drop
 # 开发环境
 docker-compose up -d
 
-# 生产环境（包含Nginx反向代理）
+# 生产环境（包含Caddy反向代理和自动HTTPS）
 docker-compose -f docker-compose.prod.yml up -d
 
 # 或使用部署脚本
@@ -39,7 +40,7 @@ docker-compose -f docker-compose.prod.yml up -d
 
 访问：
 - 开发环境：`http://localhost:3001`
-- 生产环境：`http://localhost`
+- 生产环境：`https://your-domain.com`（自动HTTPS）
 
 ### 方式二：手动Docker构建
 
@@ -79,21 +80,21 @@ npm run dev
 
 ```html
 <!-- 图片直接嵌入 -->
-<img src="http://your-domain/api/direct/abc123.jpg" alt="图片">
+<img src="https://your-domain.com/api/direct/abc123.jpg" alt="图片">
 
 <!-- 视频直接嵌入 -->
-<video controls src="http://your-domain/api/direct/abc123.mp4"></video>
+<video controls src="https://your-domain.com/api/direct/abc123.mp4"></video>
 
 <!-- 音频直接嵌入 -->
-<audio controls src="http://your-domain/api/direct/abc123.mp3"></audio>
+<audio controls src="https://your-domain.com/api/direct/abc123.mp3"></audio>
 
 <!-- PDF文档嵌入 -->
-<iframe src="http://your-domain/api/direct/abc123.pdf" width="100%" height="600px"></iframe>
+<iframe src="https://your-domain.com/api/direct/abc123.pdf" width="100%" height="600px"></iframe>
 ```
 
 ## 👨‍💼 管理后台
 
-- **访问地址**: `http://localhost:3001/#admin`
+- **访问地址**: `https://your-domain.com/#admin`（生产环境）或 `http://localhost:3001/#admin`（开发环境）
 - **默认账号**: `admin` / `password`
 - **功能**: 文件管理、过期设置、系统统计、配置调整
 
@@ -103,6 +104,10 @@ npm run dev
 - `PORT`: 服务端口（默认：3001）
 - `ADMIN_USER`: 管理员用户名
 - `ADMIN_PASSWORD`: 管理员密码
+
+### Caddy配置
+- 编辑 `Caddyfile` 设置您的域名和邮箱
+- Caddy将自动为您的域名申请和续期Let's Encrypt证书
 
 ### 文件大小限制
 默认最大20MB，可通过管理后台调整
@@ -116,6 +121,7 @@ npm run dev
 │   ├── uploads/       # 上传文件存储
 │   └── database/      # SQLite数据库
 ├── dist_frontend/     # 前端构建产物
+├── Caddyfile          # Caddy配置文件
 └── docker-compose.yml # Docker配置
 ```
 
@@ -132,14 +138,6 @@ npm run build           # 构建生产版本
 ./deploy.sh stop        # 停止服务
 ./deploy.sh logs        # 查看日志
 ```
-
-## 🔧 技术栈
-
-- **前端**: React 19 + TypeScript + Tailwind CSS
-- **后端**: Node.js + Express + TypeScript
-- **数据库**: SQLite
-- **构建**: esbuild
-- **部署**: Docker + Docker Compose + Nginx
 
 ## 📄 许可证
 
