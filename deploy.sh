@@ -25,7 +25,7 @@ show_usage() {
     echo ""
     echo "Commands:"
     echo "  dev     - Start in development mode"
-    echo "  prod    - Start in production mode with Nginx"
+    echo "  prod    - Start in production mode with Caddy"
     echo "  stop    - Stop all services"
     echo "  logs    - Show logs"
     echo "  clean   - Stop and remove all containers, networks, and volumes"
@@ -37,7 +37,6 @@ create_directories() {
     echo "📁 Creating necessary directories..."
     mkdir -p data/uploads
     mkdir -p data/database
-    mkdir -p ssl
     echo "✅ Directories created"
 }
 
@@ -56,20 +55,16 @@ start_prod() {
     echo "🏭 Starting in production mode..."
     create_directories
     
-    # Check if SSL certificates exist
-    if [ ! -f "ssl/cert.pem" ] || [ ! -f "ssl/key.pem" ]; then
-        echo "⚠️  SSL certificates not found in ssl/ directory"
-        echo "   For HTTPS, place your certificates as:"
-        echo "   - ssl/cert.pem (certificate)"
-        echo "   - ssl/key.pem (private key)"
-        echo ""
-        echo "   Continuing with HTTP only..."
-    fi
+    # Caddy will automatically handle SSL certificates via Let's Encrypt
+    echo "🔒 Caddy will automatically manage SSL certificates via Let's Encrypt"
+    echo "   Using domain: img.chawu.su"
+    echo "   Using email: support@chawu.su"
     
     docker-compose -f docker-compose.prod.yml up -d
     echo "✅ Production environment started"
-    echo "🌐 Access the application at: http://localhost"
-    echo "🔧 Admin panel at: http://localhost/#admin"
+    echo "🌐 Access the application at: https://img.chawu.su"
+    echo "🔧 Admin panel at: https://img.chawu.su/#admin"
+    echo "📝 Note: First certificate issuance may take a few moments"
 }
 
 # Stop services
