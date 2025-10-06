@@ -55,7 +55,12 @@ check_ports() {
     
     if netstat -tlnp 2>/dev/null | grep -q ":80 "; then
         echo -e "${YELLOW}⚠️  端口80已被占用${NC}"
-        echo "如果要使用Nginx反向代理，请先停止占用80端口的服务"
+        echo "如果要使用Caddy反向代理，请先停止占用80端口的服务"
+    fi
+    
+    if netstat -tlnp 2>/dev/null | grep -q ":443 "; then
+        echo -e "${YELLOW}⚠️  端口443已被占用${NC}"
+        echo "如果要使用Caddy反向代理，请先停止占用443端口的服务"
     fi
     
     if netstat -tlnp 2>/dev/null | grep -q ":3001 "; then
@@ -71,7 +76,6 @@ create_directories() {
     
     mkdir -p data/uploads
     mkdir -p data/database
-    mkdir -p ssl
     mkdir -p logs
     
     # 设置权限
@@ -117,7 +121,7 @@ deploy_app() {
     # 选择部署模式
     echo "请选择部署模式："
     echo "1) 开发模式 (端口3001)"
-    echo "2) 生产模式 (端口80，包含Nginx)"
+    echo "2) 生产模式 (端口80/443，包含Caddy，自动HTTPS)"
     read -p "请输入选择 (1-2): " choice
     
     case $choice in
@@ -131,7 +135,8 @@ deploy_app() {
             echo -e "${BLUE}🏭 启动生产模式...${NC}"
             docker-compose -f docker-compose.prod.yml up -d --build
             echo -e "${GREEN}✅ 生产模式启动完成${NC}"
-            echo -e "${GREEN}🌐 访问地址: http://$(hostname -I | awk '{print $1}')${NC}"
+            echo -e "${GREEN}🌐 访问地址: https://img.chawu.su${NC}"
+            echo -e "${YELLOW}📝 注意: 首次启动时，Caddy需要时间获取SSL证书${NC}"
             ;;
         *)
             echo -e "${RED}❌ 无效选择${NC}"
@@ -159,9 +164,13 @@ show_info() {
     echo "  用户名: admin"
     echo "  密码: password (请及时修改)"
     echo ""
+    echo -e "${BLUE}🔒 HTTPS配置:${NC}"
+    echo "  Caddy已自动配置HTTPS，将使用Let's Encrypt证书"
+    echo "  证书将自动续期"
+    echo ""
     echo -e "${YELLOW}⚠️  安全提醒:${NC}"
     echo "  1. 修改默认管理员密码"
-    echo "  2. 配置防火墙规则"
+    echo "  2. 配置防火墙规则，开放80和443端口"
     echo "  3. 定期备份数据"
     echo "  4. 监控磁盘空间"
 }
