@@ -7,7 +7,7 @@
 ├── Dockerfile                    # Docker构建文件
 ├── docker-compose.yml          # 开发环境配置
 ├── docker-compose.prod.yml     # 生产环境配置
-├── nginx.conf                  # Nginx配置
+├── Caddyfile                   # Caddy配置文件
 ├── deploy.sh                   # 部署脚本
 ├── package.json                # 根目录依赖
 ├── package-lock.json           # 锁定版本
@@ -40,6 +40,7 @@
 - `backend/uploads/` (运行时创建)
 - `backend/database/` (运行时创建)
 - `.git/` (版本控制文件)
+- `nginx.conf` (不再需要，已替换为Caddyfile)
 
 ## 🚀 部署步骤
 
@@ -55,7 +56,11 @@ docker --version
 docker-compose --version
 ```
 
-### 步骤2：上传项目文件
+### 步骤2：配置域名
+
+确保您的域名（例如：your-domain.com）已正确解析到服务器IP地址。
+
+### 步骤3：上传项目文件
 
 **方法A：使用rsync（推荐）**
 ```bash
@@ -67,6 +72,7 @@ rsync -av --exclude-from='.gitignore' \
   --exclude='backend/uploads' \
   --exclude='backend/database' \
   --exclude='.git' \
+  --exclude='nginx.conf' \
   ./ user@your-server:/path/to/universal-file-drop/
 ```
 
@@ -79,6 +85,7 @@ tar --exclude='node_modules' \
     --exclude='backend/uploads' \
     --exclude='backend/database' \
     --exclude='.git' \
+    --exclude='nginx.conf' \
     -czf universal-file-drop.tar.gz .
 
 # 上传到服务器
@@ -97,7 +104,28 @@ git clone https://github.com/your-username/universal-file-drop.git
 cd universal-file-drop
 ```
 
-### 步骤3：服务器上部署
+### 步骤4：配置Caddy
+
+编辑`Caddyfile`文件，设置您的域名和邮箱：
+
+```bash
+# 编辑Caddyfile
+nano Caddyfile
+```
+
+将以下内容中的`your-domain.com`替换为您的实际域名，`your-email@example.com`替换为您的邮箱：
+
+```
+your-domain.com {
+    # Email for ACME registration
+    email your-email@example.com
+    
+    # 其他配置保持不变
+    ...
+}
+```
+
+### 步骤5：服务器上部署
 
 ```bash
 # 进入项目目录
@@ -110,13 +138,13 @@ chmod +x deploy.sh
 ./deploy.sh prod
 ```
 
-### 步骤4：配置防火墙（如果需要）
+### 步骤6：配置防火墙（如果需要）
 
 ```bash
-# 开放HTTP端口
+# 开放HTTP端口（Caddy需要80端口获取证书）
 sudo ufw allow 80
 
-# 开放HTTPS端口（如果使用SSL）
+# 开放HTTPS端口
 sudo ufw allow 443
 ```
 
@@ -177,20 +205,36 @@ docker-compose -f docker-compose.prod.yml build --no-cache
 # 检查端口使用
 sudo netstat -tlnp | grep :80
 sudo netstat -tlnp | grep :443
+sudo netstat -tlnp | grep :3001
 ```
 
-2. **权限问题**
+2. **Caddy证书申请失败**
+```bash
+# 检查Caddy日志
+docker-compose -f docker-compose.prod.yml logs caddy
+
+# 确保域名已正确解析到服务器IP
+# 确保80端口未被其他服务占用且可从外部访问
+```
+
+3. **权限问题**
 ```bash
 # 确保Docker用户有权限
 sudo usermod -aG docker $USER
 # 重新登录生效
 ```
 
-3. **磁盘空间不足**
+4. **磁盘空间不足**
 ```bash
 # 清理Docker
 docker system prune -a
 ```
+
+## 🔒 HTTPS证书管理
+
+- Caddy会自动为您的域名申请Let's Encrypt证书
+- 证书将自动续期（通常在到期前30天）
+- 证书存储在Caddy的数据卷中
 
 ## 📞 支持
 
