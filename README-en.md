@@ -15,6 +15,7 @@ A lightweight file hosting service with direct link support, perfect for web emb
 - **🛡️ Secure**: File type validation, size limits, admin authentication
 - **📱 Responsive**: Works on desktop and mobile devices
 - **🐳 Docker Ready**: One-click deployment with Docker and Docker Compose
+- **🔒 Automatic HTTPS**: Auto-configured and renewable Let's Encrypt certificates via Caddy
 
 ## 🚀 Quick Start
 
@@ -30,7 +31,7 @@ cd universal-file-drop
 # Development environment
 docker-compose up -d
 
-# Production environment (with Nginx reverse proxy)
+# Production environment (with Caddy reverse proxy and automatic HTTPS)
 docker-compose -f docker-compose.prod.yml up -d
 
 # Or use deployment scripts
@@ -40,7 +41,7 @@ docker-compose -f docker-compose.prod.yml up -d
 
 Access:
 - Development: `http://localhost:3001`
-- Production: `http://localhost`
+- Production: `https://your-domain.com` (automatic HTTPS)
 
 ### Option 2: Manual Docker Build
 
@@ -80,21 +81,21 @@ After uploading files, you get direct links ready for web embedding:
 
 ```html
 <!-- Direct image embedding -->
-<img src="http://your-domain/api/direct/abc123.jpg" alt="Image">
+<img src="https://your-domain.com/api/direct/abc123.jpg" alt="Image">
 
 <!-- Direct video embedding -->
-<video controls src="http://your-domain/api/direct/abc123.mp4"></video>
+<video controls src="https://your-domain.com/api/direct/abc123.mp4"></video>
 
 <!-- Direct audio embedding -->
-<audio controls src="http://your-domain/api/direct/abc123.mp3"></audio>
+<audio controls src="https://your-domain.com/api/direct/abc123.mp3"></audio>
 
 <!-- PDF document embedding -->
-<iframe src="http://your-domain/api/direct/abc123.pdf" width="100%" height="600px"></iframe>
+<iframe src="https://your-domain.com/api/direct/abc123.pdf" width="100%" height="600px"></iframe>
 ```
 
 ## 👨‍💼 Admin Panel
 
-- **URL**: `http://localhost:3001/#admin`
+- **URL**: `https://your-domain.com/#admin` (production) or `http://localhost:3001/#admin` (development)
 - **Default Credentials**: `admin` / `password`
 - **Features**: File management, expiration settings, system statistics
 
@@ -104,6 +105,10 @@ After uploading files, you get direct links ready for web embedding:
 - `PORT`: Server port (default: 3001)
 - `ADMIN_USER`: Admin username
 - `ADMIN_PASSWORD`: Admin password
+
+### Caddy Configuration
+- Edit `Caddyfile` to set your domain and email
+- Caddy will automatically obtain and renew Let's Encrypt certificates for your domain
 
 ### File Size Limits
 Default 20MB, adjustable via admin panel
@@ -121,14 +126,6 @@ npm run build           # Build for production
 ./deploy.sh stop        # Stop services
 ./deploy.sh logs        # View logs
 ```
-
-## 🔧 Tech Stack
-
-- **Frontend**: React 19 + TypeScript + Tailwind CSS
-- **Backend**: Node.js + Express + TypeScript
-- **Database**: SQLite
-- **Build**: esbuild
-- **Deploy**: Docker + Docker Compose + Nginx
 
 ## 📄 License
 
