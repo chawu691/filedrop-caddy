@@ -116,8 +116,8 @@ nano Caddyfile
 将以下内容中的`Your_Domain`替换为您的实际域名，`Your_email`替换为您的邮箱：
 
 ```
-Your_Domain {  #替换为实际
-    tls Your_email  #替换为实际
+Your_Domain {  # 替换为实际
+    tls Your_email  # 替换为实际
     reverse_proxy universal-file-drop:3001
 }
 ```
