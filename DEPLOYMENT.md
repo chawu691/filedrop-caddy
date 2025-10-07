@@ -116,13 +116,11 @@ nano Caddyfile
 将以下内容中的`your-domain.com`替换为您的实际域名，`your-email@example.com`替换为您的邮箱：
 
 ```
-your-domain.com {
-    # Email for ACME registration
-    email your-email@example.com
-    
-    # 其他配置保持不变
-    ...
+Your_Domain {
+    tls Your_email
+    reverse_proxy universal-file-drop:3001
 }
+
 ```
 
 ### 步骤5：服务器上部署
