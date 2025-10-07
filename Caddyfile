@@ -1,61 +1,8 @@
 # Caddyfile for Universal File Drop
-
 Your_Domain {
-    # Security headers
-    header {
-        X-Frame-Options "DENY"
-        X-Content-Type-Options "nosniff"
-        X-XSS-Protection "1; mode=block"
-    }
-    
-    # Rate limiting
-    limit_req zone=api burst=10
-    limit_req zone=upload burst=3
-    
-    # Define rate limit zones parameters
-    limit_req_zone @api {
-        key {remote_host}
-        rate 20r/m
-        burst 10
-        expire 1m
-    }
-    
-    limit_req_zone @upload {
-        key {remote_host}
-        rate 5r/m
-        burst 3
-        expire 1m
-    }
-    
-    # Define path matchers
-    @api path /api/*
-    @upload path /api/upload
-    
-    # File upload size limit
-    request_body {
-        max_size 25MB
-    }
-    
-    # API routes with rate limiting
-    handle @api {
-        reverse_proxy universal-file-drop:3001
-    }
-    
-    # File upload endpoint with stricter rate limiting
-    handle @upload {
-        reverse_proxy universal-file-drop:3001 {
-            timeout 300s
-        }
-    }
-    
-    # All other requests
-    handle {
-        reverse_proxy universal-file-drop:3001
-    }
-    
-    # Enable compression
-    encode zstd gzip
-    
-    # Automatic HTTPS with Let's Encrypt
+    # 自动HTTPS
     tls Your_email
+
+    # 反向代理（连接后端服务）
+    reverse_proxy universal-file-drop:3001
 }
