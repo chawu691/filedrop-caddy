@@ -113,11 +113,11 @@ cd universal-file-drop
 nano Caddyfile
 ```
 
-将以下内容中的`your-domain.com`替换为您的实际域名，`your-email@example.com`替换为您的邮箱：
+将以下内容中的`Your_Domain`替换为您的实际域名，`Your_email`替换为您的邮箱：
 
 ```
-Your_Domain {
-    tls Your_email
+Your_Domain {  #替换为实际
+    tls Your_email  #替换为实际
     reverse_proxy universal-file-drop:3001
 }
 ```
